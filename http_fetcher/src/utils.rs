@@ -1,6 +1,7 @@
 use tokio::fs;
+use crate::error::FetcherError;
 
-pub async fn save_file(dir: &str, filename: &str, content: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn save_file(dir: &str, filename: &str, content: &str) -> Result<(), FetcherError> {
     let path = format!("{}/{}.txt", dir, filename);
     fs::write(path, content).await?;
     Ok(())

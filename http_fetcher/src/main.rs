@@ -1,10 +1,9 @@
 use tokio;
-use http_fetcher::config::Cli;
 use clap::Parser;
-use http_fetcher::client::{HttpClient, make_request};
+use http_fetcher::{Cli, HttpClient, make_request, FetcherError};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), FetcherError> {
     let cli = Cli::parse();
 
     let client = HttpClient::new(cli.timeout)?;

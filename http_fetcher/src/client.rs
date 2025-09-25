@@ -3,13 +3,14 @@ use std::time::Duration;
 use crate::config::Cli;
 use crate::utils::{save_file, generate_filename};
 use tokio::fs;
+use crate::error::FetcherError;
 
 pub struct HttpClient {
     client: reqwest::Client,
 }
 
 impl HttpClient {
-  pub fn new(timeout: u64) -> Result<Self, Box<dyn std::error::Error>> {
+  pub fn new(timeout: u64) -> Result<Self, FetcherError> {
       let client = reqwest::Client::builder()
           .timeout(Duration::from_secs(timeout))
           .build()?;
@@ -21,7 +22,7 @@ impl HttpClient {
   }
 }
 
-pub async fn make_request(client: &Client, cli: &Cli) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn make_request(client: &Client, cli: &Cli) -> Result<(), FetcherError> {
     let urls = cli.urls.clone();
     let mut handles = Vec::new();
     for url in urls {
