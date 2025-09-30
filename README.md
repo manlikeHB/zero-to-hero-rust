@@ -42,9 +42,9 @@ Instead of reading exhaustively before coding, I:
 
 | Status | Project | Focus Areas | Key Concepts |
 |--------|---------|-------------|--------------|
-| 🔨 | [HTTP Fetcher CLI](./http_fetcher) | Async basics, concurrency | `tokio`, `reqwest`, `async`/`await` |
-| 📅 | Chat Server (TCP) | Networking, channels | TCP sockets, message passing |
-| 📅 | Weather CLI | External APIs, JSON | REST APIs, error propagation |
+| ✅ | [HTTP Fetcher CLI](./http_fetcher) | Async basics, concurrency | `tokio`, `reqwest`, `async`/`await` |
+| ✅ | Chat Server (TCP) | Networking, channels | TCP sockets, message passing |
+| 🔨 | Weather CLI | External APIs, JSON | REST APIs, error propagation |
 | 📅 | Mini Blockchain Ledger | Systems thinking, hashing | Cryptography, data structures |
 | 📅 | Task Manager REST API | Backend fundamentals | `axum`, HTTP handlers, routing |
 | 📅 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
