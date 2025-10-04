@@ -44,7 +44,7 @@ Instead of reading exhaustively before coding, I:
 |--------|---------|-------------|--------------|
 | ✅ | [HTTP Fetcher CLI](./http_fetcher) | Async basics, concurrency | `tokio`, `reqwest`, `async`/`await` |
 | ✅ | [Chat Server (TCP)](./chat_server) | Networking, channels | TCP sockets, message passing |
-| 🔨 | Weather CLI | External APIs, JSON | REST APIs, error propagation |
+| ✅ | [Weather CLI](./weather_cli/) | External APIs, JSON | REST APIs, error propagation |
 | 📅 | Mini Blockchain Ledger | Systems thinking, hashing | Cryptography, data structures |
 | 📅 | Task Manager REST API | Backend fundamentals | `axum`, HTTP handlers, routing |
 | 📅 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
@@ -75,7 +75,9 @@ Instead of reading exhaustively before coding, I:
 ├── matrix_lib/                 # Level 3 projects
 ├── mini_csv_parser/
 ├── markdown_to_html_converter/
-└── http_fetcher/               # Level 4+ projects
+├── http_fetcher/               # Level 4+ projects
+├── chat_server/
+└── weather_cli/
 ```
 
 Each project is a standalone Cargo workspace with its own `Cargo.toml` and dependencies.
@@ -97,9 +99,9 @@ cargo test
 
 ## 📈 Progress Tracking
 
-- **Current Focus:** Mini CSV Parser
-- **Completed Projects:** 9/15
-- **Lines of Code Written:** ~2,000+
+- **Current Focus:** Mini Blockchain Ledger
+- **Completed Projects:** 12/15
+- **Lines of Code Written:** ~4,000+
 
 ## 🔄 Iteration & Improvement
 
