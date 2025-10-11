@@ -73,22 +73,14 @@ fn get(&self, row: usize, cols: &str) -> Option<&str> {
 
 ### Type-Safe Record Iteration
 ```rust
-fn iter_records(&self) -> Vec<Record> {
-    let mut records = Vec::<Record>::new();
-    for i in 1..self.rows.len() {
-        let data: Vec<String> = self.rows[i]
-            .iter()
-            .map(|a| a.trim().to_string())
-            .collect();
-        
-        if data.len() < 3 { continue; }
-        
-        if let Ok(n) = data[1].parse::<u32>() {
-            records.push(Record::new(
-                data[0].clone(), 
-                n, 
-                data[2].clone()
-            ));
+fn get_records(&self) -> Vec<Record> {
+    let mut records = Vec::new();
+    for row in &self.rows {
+        if row.len() < 3 {
+            continue;
+        }
+        if let Ok(age) = row[1].parse::<u32>() {
+            records.push(Record::new(row[0].clone(), age, row[2].clone()));
         }
     }
     records
