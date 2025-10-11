@@ -45,8 +45,8 @@ Instead of reading exhaustively before coding, I:
 | ✅ | [HTTP Fetcher CLI](./http_fetcher) | Async basics, concurrency | `tokio`, `reqwest`, `async`/`await` |
 | ✅ | [Chat Server (TCP)](./chat_server) | Networking, channels | TCP sockets, message passing |
 | ✅ | [Weather CLI](./weather_cli/) | External APIs, JSON | REST APIs, error propagation |
-| 📅 | Mini Blockchain Ledger | Systems thinking, hashing | Cryptography, data structures |
-| 📅 | Task Manager REST API | Backend fundamentals | `axum`, HTTP handlers, routing |
+| ✅ | [Mini Blockchain Ledger](./mini_blockchain/) | Systems thinking, hashing | Cryptography, data structures |
+| 🔨 | Task Manager REST API | Backend fundamentals | `axum`, HTTP handlers, routing |
 | 📅 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
 
 **Legend:**
@@ -78,6 +78,7 @@ Instead of reading exhaustively before coding, I:
 ├── http_fetcher/               # Level 4+ projects
 ├── chat_server/
 └── weather_cli/
+└── mini_blockchain/
 ```
 
 Each project is a standalone Cargo workspace with its own `Cargo.toml` and dependencies.
