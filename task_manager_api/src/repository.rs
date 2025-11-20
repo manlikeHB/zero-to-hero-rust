@@ -1,5 +1,6 @@
-use crate::models::{CreateTaskRequest, Task, UpdateTaskRequest};
+use crate::models::{CreateTaskRequest, Task, TaskQuery, UpdateTaskRequest};
 use chrono;
+use core::task;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -40,8 +41,19 @@ impl TaskRepository {
     }
 
     pub fn list(&self) -> Vec<Task> {
+        Self::list_filtered(&self, None)
+    }
+
+    pub fn list_filtered(&self, completed: Option<bool>) -> Vec<Task> {
         let tasks = self.tasks.lock().unwrap();
-        tasks.values().cloned().collect()
+        match completed {
+            Some(filter) => tasks
+                .values()
+                .cloned()
+                .filter(|task| task.completed == filter)
+                .collect(),
+            None => tasks.values().cloned().collect(),
+        }
     }
 
     pub fn get(&self, id: u64) -> Option<Task> {
@@ -218,5 +230,42 @@ mod tests {
 
         let updated_task = repo.update(6, update_desc_req);
         assert!(updated_task.is_none());
+    }
+
+    #[test]
+    fn test_list_filtered_task() {
+        let repo = TaskRepository::new();
+        let req1 = CreateTaskRequest {
+            title: "Test Task 1".to_string(),
+            description: Some("This is a test task".to_string()),
+        };
+        let req2 = CreateTaskRequest {
+            title: "Test Task 2".to_string(),
+            description: Some("This is a test task".to_string()),
+        };
+
+        let task1 = repo.create(req1);
+        let task2 = repo.create(req2);
+
+        let updated_task1 = repo.update(
+            task1.id,
+            UpdateTaskRequest {
+                title: None,
+                description: None,
+                completed: Some(true),
+            },
+        );
+        assert!(updated_task1.is_some());
+
+        let completed_tasks = repo.list_filtered(Some(true));
+        assert_eq!(completed_tasks.len(), 1);
+        assert_eq!(completed_tasks[0].id, task1.id);
+
+        let incomplete_tasks = repo.list_filtered(Some(false));
+        assert_eq!(incomplete_tasks.len(), 1);
+        assert_eq!(incomplete_tasks[0].id, task2.id);
+
+        let all_tasks = repo.list_filtered(None);
+        assert_eq!(all_tasks.len(), 2);
     }
 }

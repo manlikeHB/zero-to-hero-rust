@@ -41,6 +41,11 @@ pub struct HealthResponse {
     pub status: String,
 }
 
+#[derive(Deserialize)]
+pub struct TaskQuery {
+    pub completed: Option<bool>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -441,3 +441,154 @@ async fn test_full_crud_workflow() {
     let final_tasks = parse_json_body(final_list_response.into_body()).await;
     assert_eq!(final_tasks.as_array().unwrap().len(), 0);
 }
+
+#[tokio::test]
+async fn test_filter_by_completed_true() {
+    let app = create_test_app();
+
+    // Create incomplete task
+    let payload1 = json!({"title": "Incomplete Task"});
+    let request1 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload1.to_string()))
+        .unwrap();
+    app.clone().oneshot(request1).await.unwrap();
+
+    // Create completed task
+    let payload2 = json!({"title": "Completed Task"});
+    let request2 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload2.to_string()))
+        .unwrap();
+    app.clone().oneshot(request2).await.unwrap();
+
+    // Mark second task as completed
+    let update_payload = json!({"completed": true});
+    let update_request = Request::builder()
+        .uri("/tasks/2")
+        .method(Method::PATCH)
+        .header("content-type", "application/json")
+        .body(Body::from(update_payload.to_string()))
+        .unwrap();
+    app.clone().oneshot(update_request).await.unwrap();
+
+    // Filter by completed=true
+    let request = Request::builder()
+        .uri("/tasks?completed=true")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body.as_array().unwrap();
+
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0]["title"], "Completed Task");
+    assert_eq!(tasks[0]["completed"], true);
+}
+
+#[tokio::test]
+async fn test_filter_by_completed_false() {
+    let app = create_test_app();
+
+    // Create incomplete task
+    let payload1 = json!({"title": "Incomplete Task"});
+    let request1 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload1.to_string()))
+        .unwrap();
+    app.clone().oneshot(request1).await.unwrap();
+
+    // Create completed task
+    let payload2 = json!({"title": "Completed Task"});
+    let request2 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload2.to_string()))
+        .unwrap();
+    app.clone().oneshot(request2).await.unwrap();
+
+    // Mark second task as completed
+    let update_payload = json!({"completed": true});
+    let update_request = Request::builder()
+        .uri("/tasks/2")
+        .method(Method::PATCH)
+        .header("content-type", "application/json")
+        .body(Body::from(update_payload.to_string()))
+        .unwrap();
+    app.clone().oneshot(update_request).await.unwrap();
+
+    // Filter by completed=false
+    let request = Request::builder()
+        .uri("/tasks?completed=false")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body.as_array().unwrap();
+
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0]["title"], "Incomplete Task");
+    assert_eq!(tasks[0]["completed"], false);
+}
+
+#[tokio::test]
+async fn test_list_without_filter() {
+    let app = create_test_app();
+
+    // Create two tasks with different completion status
+    let payload1 = json!({"title": "Task 1"});
+    let request1 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload1.to_string()))
+        .unwrap();
+    app.clone().oneshot(request1).await.unwrap();
+
+    let payload2 = json!({"title": "Task 2", "completed": true});
+    let request2 = Request::builder()
+        .uri("/tasks")
+        .method(Method::POST)
+        .header("content-type", "application/json")
+        .body(Body::from(payload2.to_string()))
+        .unwrap();
+    app.clone().oneshot(request2).await.unwrap();
+
+    // Mark task 2 as completed
+    let update_payload = json!({"completed": true});
+    let update_request = Request::builder()
+        .uri("/tasks/2")
+        .method(Method::PATCH)
+        .header("content-type", "application/json")
+        .body(Body::from(update_payload.to_string()))
+        .unwrap();
+    app.clone().oneshot(update_request).await.unwrap();
+
+    // List all tasks (no filter)
+    let request = Request::builder()
+        .uri("/tasks")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body.as_array().unwrap();
+
+    // Should return both tasks
+    assert_eq!(tasks.len(), 2);
+}

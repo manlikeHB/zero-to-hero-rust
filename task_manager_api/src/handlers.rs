@@ -1,6 +1,7 @@
 use crate::errors::ApiError;
-use crate::models::{CreateTaskRequest, HealthResponse, Task, UpdateTaskRequest};
+use crate::models::{CreateTaskRequest, HealthResponse, Task, TaskQuery, UpdateTaskRequest};
 use crate::repository::TaskRepository;
+use axum::extract::Query;
 use axum::{
     Json,
     extract::{Path, State},
@@ -27,8 +28,11 @@ pub async fn create_task(
     Ok((StatusCode::CREATED, Json(task)))
 }
 
-pub async fn list_tasks(State(repo): State<Arc<TaskRepository>>) -> Json<Vec<Task>> {
-    Json(repo.list())
+pub async fn list_tasks(
+    State(repo): State<Arc<TaskRepository>>,
+    Query(query): Query<TaskQuery>,
+) -> Json<Vec<Task>> {
+    Json(repo.list_filtered(query.completed))
 }
 
 pub async fn get_task(
