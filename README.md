@@ -46,8 +46,8 @@ Instead of reading exhaustively before coding, I:
 | ✅ | [Chat Server (TCP)](./chat_server) | Networking, channels | TCP sockets, message passing |
 | ✅ | [Weather CLI](./weather_cli/) | External APIs, JSON | REST APIs, error propagation |
 | ✅ | [Mini Blockchain Ledger](./mini_blockchain/) | Systems thinking, hashing | Cryptography, data structures |
-| 🔨 | Task Manager REST API | Backend fundamentals | `axum`, HTTP handlers, routing |
-| 📅 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
+| ✅ | [Task Manager REST API](./task_manager_api) | Backend fundamentals | `axum`, HTTP handlers, routing |
+| 🔨 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
 
 **Legend:**
 - ✅ Completed
@@ -77,8 +77,9 @@ Instead of reading exhaustively before coding, I:
 ├── markdown_to_html_converter/
 ├── http_fetcher/               # Level 4+ projects
 ├── chat_server/
-└── weather_cli/
-└── mini_blockchain/
+├── weather_cli/
+├── mini_blockchain/
+└── task_manager_api/
 ```
 
 Each project is a standalone Cargo workspace with its own `Cargo.toml` and dependencies.
@@ -101,7 +102,7 @@ cargo test
 ## 📈 Progress Tracking
 
 - **Current Focus:** Mini Blockchain Ledger
-- **Completed Projects:** 12/15
+- **Completed Projects:** 14/15
 - **Lines of Code Written:** ~4,000+
 
 ## 🔄 Iteration & Improvement
