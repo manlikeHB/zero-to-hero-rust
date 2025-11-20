@@ -8,6 +8,8 @@ mod errors;
 mod handlers;
 mod models;
 mod repository;
+mod sort;
+mod utils;
 
 use handlers::{create_task, delete_task, get_task, health_check, list_tasks, update_task};
 pub use repository::TaskRepository;

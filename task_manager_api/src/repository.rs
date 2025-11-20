@@ -1,6 +1,9 @@
-use crate::models::{CreateTaskRequest, Task, TaskQuery, UpdateTaskRequest};
+use crate::models::{
+    CreateTaskRequest, PaginationMeta, PaginationResponse, Task, UpdateTaskRequest,
+};
+use crate::sort::{SortField, SortOrder};
+use crate::utils;
 use chrono;
-use core::task;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -40,19 +43,49 @@ impl TaskRepository {
         task
     }
 
-    pub fn list(&self) -> Vec<Task> {
-        Self::list_filtered(&self, None)
-    }
-
-    pub fn list_filtered(&self, completed: Option<bool>) -> Vec<Task> {
-        let tasks = self.tasks.lock().unwrap();
-        match completed {
-            Some(filter) => tasks
+    pub fn list(
+        &self,
+        completed: Option<bool>,
+        search: Option<String>,
+        sort_by: Option<SortField>,
+        order: SortOrder,
+        page: Option<u32>,
+        limit: Option<u32>,
+    ) -> PaginationResponse<Task> {
+        let tasks = {
+            self.tasks
+                .lock()
+                .unwrap()
                 .values()
                 .cloned()
-                .filter(|task| task.completed == filter)
-                .collect(),
-            None => tasks.values().cloned().collect(),
+                .collect::<Vec<Task>>()
+        };
+
+        let tasks = utils::filter_and_sort(tasks, completed, search, sort_by, order);
+        let total = tasks.len() as u32;
+
+        let (tasks, page_num, limit_num, total_pages) = if let (Some(p), Some(l)) = (page, limit) {
+            let paginated = utils::paginate(tasks, p, l);
+            let total_pages = if total == 0 {
+                0 // No items = no pages
+            } else {
+                (total as f32 / l as f32).ceil() as u32
+            };
+            (paginated, p, l, total_pages)
+        } else {
+            // No pagination: all items on "page 1"
+            let total_pages = if total == 0 { 0 } else { 1 };
+            (tasks, 1, total, total_pages)
+        };
+
+        PaginationResponse {
+            data: tasks,
+            pagination: PaginationMeta {
+                page: page_num,
+                limit: limit_num,
+                total,
+                total_pages,
+            },
         }
     }
 
@@ -124,7 +157,9 @@ mod tests {
         repo.create(req1);
         repo.create(req2);
 
-        let tasks = repo.list();
+        let tasks = repo
+            .list(None, None, None, SortOrder::default(), None, None)
+            .data;
         assert_eq!(tasks.len(), 2);
     }
 
@@ -154,7 +189,9 @@ mod tests {
             handle.join().unwrap();
         }
 
-        let tasks = repo.list();
+        let tasks = repo
+            .list(None, None, None, SortOrder::default(), None, None)
+            .data;
         assert_eq!(tasks.len(), 100);
 
         let mut ids: Vec<u64> = tasks.iter().map(|t| t.id).collect();
@@ -174,7 +211,9 @@ mod tests {
 
         let task1 = repo.create(req1);
 
-        let tasks = repo.list();
+        let tasks = repo
+            .list(None, None, None, SortOrder::default(), None, None)
+            .data;
         assert_eq!(tasks.len(), 1);
 
         let update_title_req = UpdateTaskRequest {
@@ -257,15 +296,41 @@ mod tests {
         );
         assert!(updated_task1.is_some());
 
-        let completed_tasks = repo.list_filtered(Some(true));
+        let completed_tasks = repo
+            .list(Some(true), None, None, SortOrder::default(), None, None)
+            .data;
         assert_eq!(completed_tasks.len(), 1);
         assert_eq!(completed_tasks[0].id, task1.id);
 
-        let incomplete_tasks = repo.list_filtered(Some(false));
+        let incomplete_tasks = repo
+            .list(
+                Some(false),
+                Some("test".to_string()),
+                None,
+                SortOrder::default(),
+                None,
+                None,
+            )
+            .data;
         assert_eq!(incomplete_tasks.len(), 1);
         assert_eq!(incomplete_tasks[0].id, task2.id);
 
-        let all_tasks = repo.list_filtered(None);
+        let all_tasks = repo
+            .list(None, None, None, SortOrder::default(), None, None)
+            .data;
+
         assert_eq!(all_tasks.len(), 2);
+
+        let non_existing_task = repo
+            .list(
+                Some(false),
+                Some("Nonexisting".to_string()),
+                None,
+                SortOrder::default(),
+                None,
+                None,
+            )
+            .data;
+        assert_eq!(non_existing_task.len(), 0);
     }
 }

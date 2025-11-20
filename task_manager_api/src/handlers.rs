@@ -1,5 +1,7 @@
 use crate::errors::ApiError;
-use crate::models::{CreateTaskRequest, HealthResponse, Task, TaskQuery, UpdateTaskRequest};
+use crate::models::{
+    CreateTaskRequest, HealthResponse, PaginationResponse, Task, TaskQuery, UpdateTaskRequest,
+};
 use crate::repository::TaskRepository;
 use axum::extract::Query;
 use axum::{
@@ -31,8 +33,15 @@ pub async fn create_task(
 pub async fn list_tasks(
     State(repo): State<Arc<TaskRepository>>,
     Query(query): Query<TaskQuery>,
-) -> Json<Vec<Task>> {
-    Json(repo.list_filtered(query.completed))
+) -> Json<PaginationResponse<Task>> {
+    Json(repo.list(
+        query.completed,
+        query.search,
+        query.sort_by,
+        query.order,
+        query.page,
+        query.limit,
+    ))
 }
 
 pub async fn get_task(

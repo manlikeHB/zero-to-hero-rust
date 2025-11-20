@@ -1,3 +1,4 @@
+use crate::sort::{SortField, SortOrder};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -44,6 +45,26 @@ pub struct HealthResponse {
 #[derive(Deserialize)]
 pub struct TaskQuery {
     pub completed: Option<bool>,
+    pub search: Option<String>,
+    pub sort_by: Option<SortField>,
+    #[serde(default)]
+    pub order: SortOrder,
+    pub page: Option<u32>,
+    pub limit: Option<u32>,
+}
+
+#[derive(Serialize)]
+pub struct PaginationResponse<T> {
+    pub data: Vec<T>,
+    pub pagination: PaginationMeta,
+}
+
+#[derive(Serialize)]
+pub struct PaginationMeta {
+    pub page: u32,
+    pub limit: u32,
+    pub total: u32,
+    pub total_pages: u32,
 }
 
 #[cfg(test)]

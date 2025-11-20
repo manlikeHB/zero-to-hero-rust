@@ -112,8 +112,8 @@ async fn test_list_tasks_empty() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = parse_json_body(response.into_body()).await;
-    assert!(body.is_array());
-    assert_eq!(body.as_array().unwrap().len(), 0);
+    assert!(body["data"].is_array());
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
 }
 
 #[tokio::test]
@@ -151,7 +151,7 @@ async fn test_list_tasks_with_data() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = parse_json_body(response.into_body()).await;
-    let tasks = body.as_array().unwrap();
+    let tasks = body["data"].as_array().unwrap();
 
     assert_eq!(tasks.len(), 2);
 
@@ -390,7 +390,7 @@ async fn test_full_crud_workflow() {
         .unwrap();
     let list_response = app.clone().oneshot(list_request).await.unwrap();
     let tasks = parse_json_body(list_response.into_body()).await;
-    assert_eq!(tasks.as_array().unwrap().len(), 0);
+    assert_eq!(tasks["data"].as_array().unwrap().len(), 0);
 
     // 2. Create a task
     let create_payload = json!({"title": "Workflow Task", "description": "Test workflow"});
@@ -439,7 +439,7 @@ async fn test_full_crud_workflow() {
         .unwrap();
     let final_list_response = app.oneshot(final_list_request).await.unwrap();
     let final_tasks = parse_json_body(final_list_response.into_body()).await;
-    assert_eq!(final_tasks.as_array().unwrap().len(), 0);
+    assert_eq!(final_tasks["data"].as_array().unwrap().len(), 0);
 }
 
 #[tokio::test]
@@ -486,7 +486,7 @@ async fn test_filter_by_completed_true() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = parse_json_body(response.into_body()).await;
-    let tasks = body.as_array().unwrap();
+    let tasks = body["data"].as_array().unwrap();
 
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0]["title"], "Completed Task");
@@ -537,7 +537,7 @@ async fn test_filter_by_completed_false() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = parse_json_body(response.into_body()).await;
-    let tasks = body.as_array().unwrap();
+    let tasks = body["data"].as_array().unwrap();
 
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0]["title"], "Incomplete Task");
@@ -587,8 +587,228 @@ async fn test_list_without_filter() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = parse_json_body(response.into_body()).await;
-    let tasks = body.as_array().unwrap();
+    let tasks = body["data"].as_array().unwrap();
 
     // Should return both tasks
     assert_eq!(tasks.len(), 2);
+}
+
+#[tokio::test]
+async fn test_sort_by_title_asc() {
+    let app = create_test_app();
+
+    // Create tasks in random order
+    let tasks = vec!["Zebra", "Apple", "Mango", "Banana"];
+    for title in tasks {
+        let payload = json!({"title": title});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+    }
+
+    // Sort by title ascending
+    let request = Request::builder()
+        .uri("/tasks?sort_by=title&order=asc")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    assert_eq!(tasks.len(), 4);
+    assert_eq!(tasks[0]["title"], "Apple");
+    assert_eq!(tasks[1]["title"], "Banana");
+    assert_eq!(tasks[2]["title"], "Mango");
+    assert_eq!(tasks[3]["title"], "Zebra");
+}
+
+#[tokio::test]
+async fn test_sort_by_title_desc() {
+    let app = create_test_app();
+
+    let tasks = vec!["Zebra", "Apple", "Mango"];
+    for title in tasks {
+        let payload = json!({"title": title});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+    }
+
+    // Sort by title descending
+    let request = Request::builder()
+        .uri("/tasks?sort_by=title&order=desc")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    assert_eq!(tasks[0]["title"], "Zebra");
+    assert_eq!(tasks[1]["title"], "Mango");
+    assert_eq!(tasks[2]["title"], "Apple");
+}
+
+#[tokio::test]
+async fn test_sort_by_created_at() {
+    let app = create_test_app();
+
+    // Create tasks with slight delay (though timestamps might be same)
+    for i in 1..=3 {
+        let payload = json!({"title": format!("Task {}", i)});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+    }
+
+    // Sort by created_at descending (newest first)
+    let request = Request::builder()
+        .uri("/tasks?sort_by=created_at&order=desc")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    // Should be in reverse order
+    assert_eq!(tasks[0]["title"], "Task 3");
+    assert_eq!(tasks[1]["title"], "Task 2");
+    assert_eq!(tasks[2]["title"], "Task 1");
+}
+
+#[tokio::test]
+async fn test_sort_by_completed() {
+    let app = create_test_app();
+
+    // Create tasks
+    for i in 1..=3 {
+        let payload = json!({"title": format!("Task {}", i)});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+    }
+
+    // Mark task 2 as completed
+    let update_payload = json!({"completed": true});
+    let update_request = Request::builder()
+        .uri("/tasks/2")
+        .method(Method::PATCH)
+        .header("content-type", "application/json")
+        .body(Body::from(update_payload.to_string()))
+        .unwrap();
+    app.clone().oneshot(update_request).await.unwrap();
+
+    // Sort by completed ascending (false first)
+    let request = Request::builder()
+        .uri("/tasks?sort_by=completed&order=asc")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    // Incomplete tasks first
+    assert_eq!(tasks[0]["completed"], false);
+    assert_eq!(tasks[1]["completed"], false);
+    assert_eq!(tasks[2]["completed"], true);
+}
+
+#[tokio::test]
+async fn test_sort_with_filters() {
+    let app = create_test_app();
+
+    // Create tasks
+    let tasks_data = vec![
+        ("Rust basics", false),
+        ("Python tutorial", false),
+        ("Rust advanced", true),
+        ("JavaScript guide", false),
+    ];
+
+    for (title, completed) in tasks_data {
+        let payload = json!({"title": title});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+
+        if completed {
+            let update = json!({"completed": true});
+            let id = if title == "Rust advanced" { 3 } else { 0 };
+            let update_request = Request::builder()
+                .uri(&format!("/tasks/{}", id))
+                .method(Method::PATCH)
+                .header("content-type", "application/json")
+                .body(Body::from(update.to_string()))
+                .unwrap();
+            app.clone().oneshot(update_request).await.unwrap();
+        }
+    }
+
+    // Filter: completed=false, search=rust, sort by title desc
+    let request = Request::builder()
+        .uri("/tasks?completed=false&search=rust&sort_by=title&order=desc")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    // Should only return incomplete tasks with "rust", sorted by title desc
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0]["title"], "Rust basics");
+}
+
+#[tokio::test]
+async fn test_default_order_is_asc() {
+    let app = create_test_app();
+
+    let tasks = vec!["C", "A", "B"];
+    for title in tasks {
+        let payload = json!({"title": title});
+        let request = Request::builder()
+            .uri("/tasks")
+            .method(Method::POST)
+            .header("content-type", "application/json")
+            .body(Body::from(payload.to_string()))
+            .unwrap();
+        app.clone().oneshot(request).await.unwrap();
+    }
+
+    // Sort by title without specifying order (should default to asc)
+    let request = Request::builder()
+        .uri("/tasks?sort_by=title")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    let body = parse_json_body(response.into_body()).await;
+    let tasks = body["data"].as_array().unwrap();
+
+    assert_eq!(tasks[0]["title"], "A");
+    assert_eq!(tasks[1]["title"], "B");
+    assert_eq!(tasks[2]["title"], "C");
 }
