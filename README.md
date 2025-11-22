@@ -47,7 +47,6 @@ Instead of reading exhaustively before coding, I:
 | ✅ | [Weather CLI](./weather_cli/) | External APIs, JSON | REST APIs, error propagation |
 | ✅ | [Mini Blockchain Ledger](./mini_blockchain/) | Systems thinking, hashing | Cryptography, data structures |
 | ✅ | [Task Manager REST API](./task_manager_api) | Backend fundamentals | `axum`, HTTP handlers, routing |
-| 🔨 | Blockchain REST API | Systems + Backend integration | Combining previous concepts |
 
 **Legend:**
 - ✅ Completed
@@ -102,8 +101,8 @@ cargo test
 ## 📈 Progress Tracking
 
 - **Current Focus:** Mini Blockchain Ledger
-- **Completed Projects:** 14/15
-- **Lines of Code Written:** ~4,000+
+- **Completed Projects:** 14/14
+- **Lines of Code Written:** ~20,000+
 
 ## 🔄 Iteration & Improvement
 
